@@ -127,6 +127,7 @@ function daysText(days){
   if(JSON.stringify(days)==JSON.stringify([1,2,3,4,5]))return "Lun–Ven";
   return days.map(d=>DAY_NAMES[d]).join(", ");
 }
+function escapeHTML(value){return String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[ch])}
 function effectiveTomorrow(){
   const t=tomorrowDate(),iso=tomorrowISO(),dow=t.getDay();
   if(skipTomorrow===iso)return {skip:true};
@@ -144,7 +145,7 @@ function render(){
   const list=document.getElementById("scheduleList");
   list.innerHTML=schedules.length?"":"<div class='empty'>Nessuna programmazione. Tocca + per aggiungerne una.</div>";
   schedules.forEach(s=>{
-    list.insertAdjacentHTML("beforeend",`<div class="alarm" onclick="editSchedule(${s.id})"><div><div class="alarmTime">${s.start}–${s.end}</div><div class="alarmMeta">${daysText(s.days)}</div><div class="alarmLabel">${s.label||"Usain"}</div></div><input class="toggle" type="checkbox" ${s.enabled?"checked":""} onclick="event.stopPropagation()" onchange="toggleSchedule(${s.id},this.checked)"></div>`);
+    list.insertAdjacentHTML("beforeend",`<div class="alarm" onclick="editSchedule(${s.id})"><div><div class="alarmTime">${s.start}–${s.end}</div><div class="alarmMeta">${daysText(s.days)}</div><div class="alarmLabel">${escapeHTML(s.label||"Usain")}</div></div><input class="toggle" type="checkbox" ${s.enabled?"checked":""} onclick="event.stopPropagation()" onchange="toggleSchedule(${s.id},this.checked)"></div>`);
   });
   const t=tomorrowDate(),eff=effectiveTomorrow();
   document.getElementById("tomorrowTitle").textContent=`Domani · ${DAY_NAMES[t.getDay()]} ${t.getDate()}/${t.getMonth()+1}`;
