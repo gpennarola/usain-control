@@ -1,46 +1,191 @@
 <!doctype html>
-<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b0b0c"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon.svg">
-<title>Usain Control</title><style>
-:root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;color:#f5f5f7;background:#080809}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#151518,#080809 35%);min-height:100vh}
-.app{max-width:520px;margin:auto;padding:calc(env(safe-area-inset-top) + 20px) 18px 110px}
-.hero{display:flex;justify-content:space-between;align-items:center;margin:10px 0 24px}.brand{font-size:30px;font-weight:800;letter-spacing:-1px}.bolt{font-size:28px}
-.card{background:#171719;border:1px solid #29292d;border-radius:22px;padding:18px;margin:12px 0;box-shadow:0 12px 35px #0005}
-.muted{color:#9b9ba1}.status{display:inline-flex;gap:7px;align-items:center;font-size:13px}.dot{width:8px;height:8px;border-radius:50%;background:#34c759}
-h2{font-size:18px;margin:0 0 12px}.day{display:grid;grid-template-columns:1fr auto;gap:8px;padding:14px 0;border-top:1px solid #2a2a2d}.day:first-of-type{border-top:0}
-.day strong{display:block}.time{font-size:14px;color:#b8b8be;margin-top:3px}.toggle{appearance:none;width:48px;height:29px;border-radius:20px;background:#3a3a3e;position:relative;transition:.2s}
-.toggle:checked{background:#34c759}.toggle:after{content:"";position:absolute;width:25px;height:25px;top:2px;left:2px;border-radius:50%;background:white;transition:.2s}.toggle:checked:after{left:21px}
-button{border:0;border-radius:15px;padding:14px 16px;font-size:16px;font-weight:700}.primary{width:100%;background:#f5f5f7;color:#0b0b0c}.secondary{background:#2b2b2f;color:white}
-.sheet{position:fixed;inset:0;background:#0009;display:none;align-items:flex-end;justify-content:center}.sheet.open{display:flex}.panel{width:min(520px,100%);background:#1c1c1e;border-radius:26px 26px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom) + 22px)}
-label{font-size:13px;color:#aaa;display:block;margin:14px 0 6px}input,select{width:100%;background:#2b2b2e;color:white;border:1px solid #3b3b40;border-radius:12px;padding:13px;font-size:16px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:10px;margin-top:20px}.actions button{flex:1}
-.pill{font-size:12px;background:#242428;border-radius:999px;padding:6px 9px;color:#bdbdc2}
-</style></head><body><main class="app">
-<div class="hero"><div><div class="brand">USAIN ⚡️</div><div class="muted">Control</div></div><span class="status"><span class="dot"></span> Sistema pronto</span></div>
-<section class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div><h2>Prossima corsa</h2><div id="next" class="muted">Nessuna prenotazione programmata</div></div><div style="display:flex;flex-direction:column;gap:8px;min-width:150px"><button id="skipBtn" class="secondary" onclick="toggleSkipTomorrow()">Salta domani</button><button class="secondary" onclick="openTomorrowTime()">Cambia orario domani</button></div></div><div id="skipNote" class="time" style="margin-top:10px"></div></section>
-<section class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Programmazione</h2><span class="pill">iPhone</span></div><div id="days"></div><button class="primary" onclick="openSheet()">＋ Nuova prenotazione</button></section>
-<section class="card"><h2>Preferenze</h2><div class="day"><div><strong>Priorità postazioni</strong><div class="time">Sala Stud 1 → 5, poi Desk Stud</div></div><button class="secondary" onclick="alert('La gestione avanzata delle preferenze sarà collegata nella fase 2.')">Gestisci</button></div></section>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Usain Control</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;color:#fff;background:#000}
+*{box-sizing:border-box}body{margin:0;background:#000;min-height:100vh}
+.app{max-width:520px;margin:auto;padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 90px)}
+.top{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 18px}
+.brand{font-size:30px;font-weight:800;letter-spacing:-1.2px}.sub{font-size:14px;color:#8e8e93;margin-top:2px}
+.iconbtn{width:38px;height:38px;border-radius:50%;border:0;background:#1c1c1e;color:#ff9f0a;font-size:27px;line-height:38px;padding:0}
+.sectionTitle{font-size:13px;color:#8e8e93;text-transform:uppercase;letter-spacing:.4px;margin:20px 4px 8px}
+.card{background:#1c1c1e;border-radius:18px;overflow:hidden}
+.quick{padding:14px 16px}.tomorrow{font-size:17px;font-weight:700}.tomorrowMeta{color:#8e8e93;font-size:14px;margin-top:3px}
+.quickActions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.action{border:0;border-radius:13px;padding:13px 10px;background:#2c2c2e;color:#fff;font-size:15px;font-weight:650}
+.action.orange{color:#ff9f0a}.action.danger{color:#ff453a}.action.active{background:#3a2323;color:#ff6961}
+.alarm{display:grid;grid-template-columns:1fr auto;align-items:center;padding:14px 16px;border-top:1px solid #323234}
+.alarm:first-child{border-top:0}.alarmTime{font-size:34px;font-weight:300;letter-spacing:-1.4px;line-height:1.05}
+.alarmMeta{color:#8e8e93;font-size:13px;margin-top:6px}.alarmLabel{font-size:14px;color:#d1d1d6;margin-top:3px}
+.toggle{appearance:none;width:51px;height:31px;border-radius:20px;background:#3a3a3c;position:relative;transition:.2s}
+.toggle:checked{background:#34c759}.toggle:after{content:"";position:absolute;width:27px;height:27px;top:2px;left:2px;border-radius:50%;background:#fff;transition:.2s}.toggle:checked:after{left:22px}
+.empty{padding:24px 18px;color:#8e8e93;text-align:center}
+.sheet{position:fixed;inset:0;background:#0009;display:none;align-items:flex-end;justify-content:center;z-index:20}.sheet.open{display:flex}
+.panel{width:min(520px,100%);background:#1c1c1e;border-radius:24px 24px 0 0;padding:12px 16px calc(env(safe-area-inset-bottom) + 18px)}
+.handle{width:36px;height:5px;border-radius:5px;background:#5a5a5f;margin:0 auto 12px}
+.panelHead{display:flex;justify-content:space-between;align-items:center}.panelHead h2{font-size:18px;margin:0}.textbtn{background:none;border:0;color:#ff9f0a;font-size:16px;font-weight:650;padding:8px}
+.timeRow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.field{background:#2c2c2e;border-radius:14px;padding:11px 12px}.field label{display:block;color:#8e8e93;font-size:12px;margin-bottom:5px}
+input[type=time]{width:100%;background:transparent;color:#fff;border:0;font-size:28px;font-weight:300;outline:0}
+.days{display:flex;justify-content:space-between;gap:6px;margin:10px 0 18px}.daychip{width:38px;height:38px;border-radius:50%;border:0;background:#2c2c2e;color:#fff;font-weight:700}.daychip.on{background:#ff9f0a;color:#000}
+.row{display:flex;align-items:center;justify-content:space-between;background:#2c2c2e;border-radius:14px;padding:13px 14px;margin-top:10px}
+.row input[type=text]{background:transparent;border:0;color:#fff;text-align:right;font-size:16px;outline:0;width:60%}
+.note{font-size:12px;color:#8e8e93;margin:10px 4px 0}.delete{width:100%;border:0;border-radius:13px;background:#2c2c2e;color:#ff453a;padding:13px;margin-top:14px;font-size:16px}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="top">
+    <div><div class="brand">USAIN ⚡️</div><div class="sub">Programmazione</div></div>
+    <button class="iconbtn" onclick="openSchedule()">+</button>
+  </div>
+
+  <div class="sectionTitle">Domani</div>
+  <section class="card quick">
+    <div class="tomorrow" id="tomorrowTitle">Domani</div>
+    <div class="tomorrowMeta" id="tomorrowStatus">Programmazione standard</div>
+    <div class="quickActions">
+      <button id="skipBtn" class="action danger" onclick="toggleSkipTomorrow()">Salta domani</button>
+      <button class="action orange" onclick="openTomorrow()">Cambia orario</button>
+    </div>
+  </section>
+
+  <div class="sectionTitle">Programmazione settimanale</div>
+  <section class="card" id="scheduleList"></section>
+  <div class="note">Come nelle Sveglie: ogni riga ha un orario, i giorni in cui si ripete e un interruttore per attivarla o disattivarla.</div>
 </main>
-<div class="sheet" id="sheet"><div class="panel"><h2 id="sheetTitle">Nuova prenotazione</h2>
-<label>Data</label><input id="date" type="date">
-<div class="row"><div><label>Dalle</label><input id="start" type="time" value="15:00"></div><div><label>Alle</label><input id="end" type="time" value="19:00"></div></div>
-<label>Preferenza</label><select id="pref"><option>Sala Stud (priorità)</option><option>Qualsiasi postazione</option></select>
-<div class="actions"><button class="secondary" onclick="closeSheet()">Annulla</button><button id="saveBtn" class="primary" onclick="save()">Programma</button></div></div></div>
+
+<div class="sheet" id="sheet">
+  <div class="panel">
+    <div class="handle"></div>
+    <div class="panelHead">
+      <button class="textbtn" onclick="closeSheet()">Annulla</button>
+      <h2 id="sheetTitle">Nuova programmazione</h2>
+      <button class="textbtn" onclick="saveSheet()">Salva</button>
+    </div>
+    <div class="timeRow">
+      <div class="field"><label>Dalle</label><input id="start" type="time" value="15:00"></div>
+      <div class="field"><label>Alle</label><input id="end" type="time" value="19:00"></div>
+    </div>
+    <div id="daysBlock">
+      <div class="sectionTitle" style="margin-top:4px">Ripeti</div>
+      <div class="days" id="daysPicker"></div>
+      <div class="row"><span>Etichetta</span><input id="label" type="text" value="Sala Studenti"></div>
+    </div>
+    <button id="deleteBtn" class="delete" style="display:none" onclick="deleteCurrent()">Elimina programmazione</button>
+  </div>
+</div>
+
 <script>
-const KEY="usain-control-v1"; const SKIP_KEY="usain-skip-tomorrow-v1"; const TOMORROW_TIME_KEY="usain-tomorrow-time-v1"; let items=JSON.parse(localStorage.getItem(KEY)||"[]"); let skipTomorrow=JSON.parse(localStorage.getItem(SKIP_KEY)||"null"); let tomorrowTime=JSON.parse(localStorage.getItem(TOMORROW_TIME_KEY)||"null"); let editMode="new";
-function fmt(d){return new Intl.DateTimeFormat("it-IT",{weekday:"long",day:"numeric",month:"long"}).format(new Date(d+"T12:00"))}
-function tomorrowISO(){const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().slice(0,10)}
-function normalizeSkip(){if(skipTomorrow && skipTomorrow!==tomorrowISO()){skipTomorrow=null;localStorage.removeItem(SKIP_KEY)}}
-function toggleSkipTomorrow(){normalizeSkip();const t=tomorrowISO();skipTomorrow=skipTomorrow===t?null:t;if(skipTomorrow)localStorage.setItem(SKIP_KEY,JSON.stringify(skipTomorrow));else localStorage.removeItem(SKIP_KEY);render()}
-function render(){normalizeSkip();items.sort((a,b)=>a.date.localeCompare(b.date)); const box=document.getElementById("days");box.innerHTML=items.length?"":"<p class='muted'>Aggiungi i giorni in cui vuoi attivare Usain.</p>";
-items.forEach((x,i)=>box.insertAdjacentHTML("beforeend",`<div class="day"><div onclick="edit(${i})"><strong>${fmt(x.date)}</strong><div class="time">${x.start}–${x.end} · ${x.pref}</div></div><input class="toggle" type="checkbox" ${x.enabled?"checked":""} onchange="toggle(${i},this.checked)"></div>`));
-const t=tomorrowISO();if(tomorrowTime&&tomorrowTime.date!==t){tomorrowTime=null;localStorage.removeItem(TOMORROW_TIME_KEY)}const n=items.find(x=>x.enabled&&x.date>=new Date().toISOString().slice(0,10)&&!(skipTomorrow===t&&x.date===t));document.getElementById("next").innerHTML=n?`<strong>${fmt(n.date)}</strong><div class="time">${n.start}–${n.end} · Attiva</div>`:"Nessuna prenotazione programmata";
-const btn=document.getElementById("skipBtn"),note=document.getElementById("skipNote");if(skipTomorrow===t){btn.textContent="Domani saltato ✓";btn.style.background="#3a2a2a";note.textContent="Usain non dovrà avviare il flusso per domani. Tocca di nuovo per riattivarlo."}else{btn.textContent="Salta domani";btn.style.background="";note.textContent=""}}
-function openSheet(){editMode="new";document.getElementById("sheetTitle").textContent="Nuova prenotazione";document.getElementById("saveBtn").textContent="Programma";document.getElementById("date").disabled=false;document.getElementById("sheet").classList.add("open");document.getElementById("date").value=tomorrowISO()}
-function openTomorrowTime(){editMode="tomorrow";document.getElementById("sheetTitle").textContent="Orario di domani";document.getElementById("saveBtn").textContent="Salva orario";document.getElementById("date").value=tomorrowISO();document.getElementById("date").disabled=true;if(tomorrowTime&&tomorrowTime.date===tomorrowISO()){document.getElementById("start").value=tomorrowTime.start;document.getElementById("end").value=tomorrowTime.end}else{const x=items.find(i=>i.date===tomorrowISO()&&i.enabled);document.getElementById("start").value=x?x.start:"15:00";document.getElementById("end").value=x?x.end:"19:00"}document.getElementById("sheet").classList.add("open")}
+const SCHEDULE_KEY="usain-schedules-v2";
+const SKIP_KEY="usain-skip-tomorrow-v1";
+const TOMORROW_KEY="usain-tomorrow-override-v2";
+const DAY_NAMES=["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
+const CHIP_NAMES=["D","L","M","M","G","V","S"];
+let schedules=JSON.parse(localStorage.getItem(SCHEDULE_KEY)||"[]");
+let skipTomorrow=JSON.parse(localStorage.getItem(SKIP_KEY)||"null");
+let tomorrowOverride=JSON.parse(localStorage.getItem(TOMORROW_KEY)||"null");
+let mode="new",currentId=null,selectedDays=[1,2,3,4,5];
+
+if(!schedules.length){
+  schedules=[{id:Date.now(),start:"15:00",end:"19:00",days:[1,2,3,4,5],enabled:true,label:"Sala Studenti"}];
+  saveSchedules();
+}
+
+function localISO(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`}
+function tomorrowDate(){const d=new Date();d.setDate(d.getDate()+1);return d}
+function tomorrowISO(){return localISO(tomorrowDate())}
+function saveSchedules(){localStorage.setItem(SCHEDULE_KEY,JSON.stringify(schedules))}
+function daysText(days){
+  if(days.length===7)return "Ogni giorno";
+  if(JSON.stringify(days)==JSON.stringify([1,2,3,4,5]))return "Lun–Ven";
+  return days.map(d=>DAY_NAMES[d]).join(", ");
+}
+function effectiveTomorrow(){
+  const t=tomorrowDate(),iso=tomorrowISO(),dow=t.getDay();
+  if(skipTomorrow===iso)return {skip:true};
+  if(tomorrowOverride && tomorrowOverride.date===iso)return {start:tomorrowOverride.start,end:tomorrowOverride.end,override:true};
+  const s=schedules.find(x=>x.enabled&&x.days.includes(dow));
+  return s?{start:s.start,end:s.end,label:s.label}:{none:true};
+}
+function normalize(){
+  const iso=tomorrowISO();
+  if(skipTomorrow&&skipTomorrow!==iso){skipTomorrow=null;localStorage.removeItem(SKIP_KEY)}
+  if(tomorrowOverride&&tomorrowOverride.date!==iso){tomorrowOverride=null;localStorage.removeItem(TOMORROW_KEY)}
+}
+function render(){
+  normalize();
+  const list=document.getElementById("scheduleList");
+  list.innerHTML=schedules.length?"":"<div class='empty'>Nessuna programmazione. Tocca + per aggiungerne una.</div>";
+  schedules.forEach(s=>{
+    list.insertAdjacentHTML("beforeend",`<div class="alarm" onclick="editSchedule(${s.id})"><div><div class="alarmTime">${s.start}–${s.end}</div><div class="alarmMeta">${daysText(s.days)}</div><div class="alarmLabel">${s.label||"Usain"}</div></div><input class="toggle" type="checkbox" ${s.enabled?"checked":""} onclick="event.stopPropagation()" onchange="toggleSchedule(${s.id},this.checked)"></div>`);
+  });
+  const t=tomorrowDate(),eff=effectiveTomorrow();
+  document.getElementById("tomorrowTitle").textContent=`Domani · ${DAY_NAMES[t.getDay()]} ${t.getDate()}/${t.getMonth()+1}`;
+  const status=document.getElementById("tomorrowStatus"),btn=document.getElementById("skipBtn");
+  if(eff.skip){status.textContent="Nessun flusso di prenotazione";btn.textContent="Domani saltato ✓";btn.classList.add("active")}
+  else if(eff.none){status.textContent="Nessuna programmazione attiva";btn.textContent="Salta domani";btn.classList.remove("active")}
+  else{status.textContent=`${eff.start}–${eff.end}${eff.override?" · modifica solo per domani":""}`;btn.textContent="Salta domani";btn.classList.remove("active")}
+}
+function toggleSkipTomorrow(){
+  const iso=tomorrowISO();
+  skipTomorrow=skipTomorrow===iso?null:iso;
+  if(skipTomorrow)localStorage.setItem(SKIP_KEY,JSON.stringify(skipTomorrow)); else localStorage.removeItem(SKIP_KEY);
+  render();
+}
+function toggleSchedule(id,v){const s=schedules.find(x=>x.id===id);if(s){s.enabled=v;saveSchedules();render()}}
+function buildDays(){
+  const box=document.getElementById("daysPicker");box.innerHTML="";
+  CHIP_NAMES.forEach((n,d)=>box.insertAdjacentHTML("beforeend",`<button class="daychip ${selectedDays.includes(d)?"on":""}" onclick="toggleDay(${d})">${n}</button>`));
+}
+function toggleDay(d){selectedDays=selectedDays.includes(d)?selectedDays.filter(x=>x!==d):[...selectedDays,d].sort();buildDays()}
+function openSchedule(){
+  mode="new";currentId=null;selectedDays=[1,2,3,4,5];
+  document.getElementById("sheetTitle").textContent="Nuova programmazione";
+  document.getElementById("start").value="15:00";document.getElementById("end").value="19:00";document.getElementById("label").value="Sala Studenti";
+  document.getElementById("daysBlock").style.display="block";document.getElementById("deleteBtn").style.display="none";buildDays();openSheet();
+}
+function editSchedule(id){
+  const s=schedules.find(x=>x.id===id);if(!s)return;
+  mode="edit";currentId=id;selectedDays=[...s.days];
+  document.getElementById("sheetTitle").textContent="Modifica programmazione";
+  document.getElementById("start").value=s.start;document.getElementById("end").value=s.end;document.getElementById("label").value=s.label||"Sala Studenti";
+  document.getElementById("daysBlock").style.display="block";document.getElementById("deleteBtn").style.display="block";buildDays();openSheet();
+}
+function openTomorrow(){
+  mode="tomorrow";currentId=null;
+  const eff=effectiveTomorrow();
+  document.getElementById("sheetTitle").textContent="Orario di domani";
+  document.getElementById("start").value=eff.start||"15:00";document.getElementById("end").value=eff.end||"19:00";
+  document.getElementById("daysBlock").style.display="none";document.getElementById("deleteBtn").style.display=tomorrowOverride&&tomorrowOverride.date===tomorrowISO()?"block":"none";openSheet();
+}
+function openSheet(){document.getElementById("sheet").classList.add("open")}
 function closeSheet(){document.getElementById("sheet").classList.remove("open")}
-function save(){const date=document.getElementById("date").value;if(!date)return alert("Scegli una data");const start=document.getElementById("start").value,end=document.getElementById("end").value,pref=document.getElementById("pref").value;if(editMode==="tomorrow"){tomorrowTime={date,start,end};localStorage.setItem(TOMORROW_TIME_KEY,JSON.stringify(tomorrowTime));const idx=items.findIndex(i=>i.date===date);if(idx>=0){items[idx].start=start;items[idx].end=end}else{items.push({date,start,end,pref,enabled:true})}}else{items.push({date,start,end,pref,enabled:true})}persist();closeSheet()}
-function toggle(i,v){items[i].enabled=v;persist()} function edit(i){if(confirm("Eliminare questa programmazione?")){items.splice(i,1);persist()}}
-function persist(){localStorage.setItem(KEY,JSON.stringify(items));render()} render(); if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
-</script></body></html>
+function saveSheet(){
+  const start=document.getElementById("start").value,end=document.getElementById("end").value;
+  if(!start||!end)return;
+  if(mode==="tomorrow"){
+    tomorrowOverride={date:tomorrowISO(),start,end};localStorage.setItem(TOMORROW_KEY,JSON.stringify(tomorrowOverride));skipTomorrow=null;localStorage.removeItem(SKIP_KEY);
+  }else if(mode==="new"){
+    schedules.push({id:Date.now(),start,end,days:selectedDays,enabled:true,label:document.getElementById("label").value||"Usain"});
+    saveSchedules();
+  }else{
+    const s=schedules.find(x=>x.id===currentId);if(s){s.start=start;s.end=end;s.days=selectedDays;s.label=document.getElementById("label").value||"Usain";saveSchedules()}
+  }
+  closeSheet();render();
+}
+function deleteCurrent(){
+  if(mode==="tomorrow"){tomorrowOverride=null;localStorage.removeItem(TOMORROW_KEY)}
+  else{schedules=schedules.filter(x=>x.id!==currentId);saveSchedules()}
+  closeSheet();render();
+}
+render();
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
+</script>
+</body></html>
