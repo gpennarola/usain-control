@@ -1,14 +1,14 @@
 name = "usain-control"
 main = "src/index.js"
 compatibility_date = "2026-09-26"
-
+keep_vars = true
 [assets]
 directory = "./public"
 binding = "ASSETS"
 run_worker_first = true
-
 [vars]
 GITHUB_REPOSITORY = "gpennarola/gobright-auto-booking"
 CONFIG_PATH = "control-settings.json"
-# Set ACCESS_TEAM_DOMAIN, ACCESS_AUD and ALLOWED_EMAIL as Worker variables.
-# Set GITHUB_TOKEN as an encrypted Worker secret.
+ACCESS_TEAM_DOMAIN = "orange-heart-d1dd.cloudflareaccess.com"
+ACCESS_AUD = "5ff4af12d7cc73d8476fd208cff8e6c7dc3b7aea260d8042ae2f38624d145230"
+ALLOWED_EMAIL = "g.pennarola@texplora.it"
