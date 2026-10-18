@@ -1,5 +1,6 @@
 import { availabilityPage } from './availability-page.js';
 import { schedulePage } from './schedule-page.js';
+import { delayPage } from './delay-page.js';
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const defaults = {
@@ -83,6 +84,7 @@ const historyWidget = [
   "<section id='usain-history' style='max-width:520px;margin:18px auto 100px;padding:0 18px;color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif'>",
   "<div style='background:#171719;border:1px solid #29292d;border-radius:22px;padding:18px'>",
   "<h2 style='font-size:18px;margin:0 0 6px'>Prenotazioni effettuate</h2>",
+  "<p><a href='/ritarda-accesso' style='color:#f5a953'>Ritarda accesso · procedura assistita →</a></p>",
   "<p style='font-size:12px;color:#a9a9ae;margin:0 0 15px'>Conferme ricevute da GoBright al momento della prenotazione. Eventuali modifiche successive non sono verificate qui.</p>",
   "<div id='usain-history-list' aria-live='polite'>Caricamento…</div>",
   "</div></section>",
@@ -110,6 +112,10 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
     const configPath = env.CONFIG_PATH || "control-settings.json";
+    if (path === '/ritarda-accesso') {
+      if (request.method !== 'GET') return new Response('Metodo non consentito', {status:405});
+      return new Response(delayPage, {headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'}});
+    }
     if (path === '/disponibilita') {
       if (request.method !== 'GET') return new Response('Metodo non consentito', {status:405});
       return new Response(availabilityPage, {headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'}});
