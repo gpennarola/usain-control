@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const source = await readFile(new URL('../src/coordinator-claim.js', import.meta.url), 'utf8');
-const { claimBookingEvent } = await import('data:text/javascript,' + encodeURIComponent(source));
+const { claimBookingEvent, recordBookingDispatch } = await import('data:text/javascript,' + encodeURIComponent(source));
 
 test('claims via Durable Object stub, never GitHub', async () => {
   let calls = 0;
@@ -33,4 +33,27 @@ test('does not retry if Durable Object reports already claimed', async () => {
   }) };
   assert.equal((await claimBookingEvent(namespace, '2026-10-27/21:00/Europe-Rome')).claimed, false);
   assert.equal(calls, 1);
+});
+
+test('records status through Durable Object without GitHub requests', async () => {
+  let calls = 0;
+  const namespace = { idFromName: () => 'id', get: () => ({
+    fetch: async (url, options) => {
+      calls++;
+      assert.equal(new URL(url).pathname, '/record');
+      assert.deepEqual(JSON.parse(options.body), {
+        eventKey: '2026-10-27/21:00/Europe-Rome',
+        status: 'accepted_not_booked'
+      });
+      return { ok: true, json: async () => ({updated:true}) };
+    }
+  }) };
+  await recordBookingDispatch(namespace, '2026-10-27/21:00/Europe-Rome', 'accepted_not_booked');
+  assert.equal(calls, 1);
+});
+test('missing persisted result is an error', async () => {
+  const namespace = { idFromName:()=> 'id', get:()=> ({
+    fetch: async ()=> ({ok:true,json:async()=>({updated:false})})
+  }) };
+  await assert.rejects(recordBookingDispatch(namespace,'2026-10-27/21:00/Europe-Rome','unknown'));
 });
