@@ -2,6 +2,7 @@ name = "usain-control"
 main = "src/index.js"
 compatibility_date = "2026-09-26"
 keep_vars = true
+[previews]
 [assets]
 directory = "./public"
 binding = "ASSETS"
