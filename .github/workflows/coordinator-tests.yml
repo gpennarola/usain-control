@@ -22,3 +22,8 @@ jobs:
           node-version: '22'
       - name: Unit tests only — no credentials or bookings
         run: node --test worker/tests/booking-coordinator.test.mjs worker/tests/dispatch-ledger.test.mjs worker/tests/github-dispatch.test.mjs worker/tests/coordinator-claim.test.mjs worker/tests/usain-booking-lock.test.mjs
+
+      - name: Install isolated Cloudflare runtime
+        run: npm install --no-save miniflare@3
+      - name: Durable Object runtime concurrency smoke test
+        run: node worker/tests/durable-object-runtime.test.mjs
