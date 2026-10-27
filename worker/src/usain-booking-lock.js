@@ -8,13 +8,11 @@ export class UsainBookingLock {
     if (request.method !== 'POST') return new Response('Method not allowed', {status:405});
     const url = new URL(request.url);
     if (!['/claim','/record'].includes(url.pathname)) return new Response('Not found', {status:404});
-    let eventKey;
-    try { ({eventKey} = await request.json()); } catch { return new Response('Invalid JSON', {status:400}); }
+    let eventKey, status;
+    try { ({eventKey, status} = await request.json()); } catch { return new Response('Invalid JSON', {status:400}); }
     if (typeof eventKey !== 'string' || !/^\d{4}-\d{2}-\d{2}\/\d{2}:00\/Europe-Rome$/.test(eventKey))
       return new Response('Invalid event', {status:400});
     if (url.pathname === '/record') {
-      let status;
-      try { ({status} = await request.clone().json()); } catch { return new Response('Invalid JSON', {status:400}); }
       if (!['accepted_not_booked','unknown','rejected','authentication_or_permission_error','workflow_or_repository_not_found','retryable_remote_error','dispatch_failed'].includes(status))
         return new Response('Invalid status', {status:400});
       const updated = await this.ctx.storage.transaction(async tx => {
