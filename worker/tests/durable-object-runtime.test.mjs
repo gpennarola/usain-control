@@ -14,7 +14,7 @@ const mf = new Miniflare({
         return stub.fetch(request);
       }
     };`
-  ].join('\\n'),
+  ].join(String.fromCharCode(10)),
   durableObjects: { USAIN_BOOKING_LOCK: 'UsainBookingLock' },
   compatibilityDate: '2026-09-26'
 });
