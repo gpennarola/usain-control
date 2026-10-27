@@ -45,3 +45,25 @@ test('rejects invalid event and unsupported method', async () => {
   assert.equal((await claim(lock,'invalid')).status, 400);
   assert.equal((await lock.fetch(new Request('https://internal/claim'))).status, 405);
 });
+
+test('records accepted dispatch persistently and rejects duplicate claim', async () => {
+  const lock = new UsainBookingLock({ storage: storage() });
+  const eventKey = '2026-10-27/21:00/Europe-Rome';
+  assert.equal((await (await claim(lock,eventKey)).json()).claimed,true);
+  const recorded = await lock.fetch(new Request('https://internal/record', {
+    method:'POST', headers:{'content-type':'application/json'},
+    body:JSON.stringify({eventKey,status:'accepted_not_booked'})
+  }));
+  assert.equal((await recorded.json()).updated,true);
+  const duplicate = await (await claim(lock,eventKey)).json();
+  assert.equal(duplicate.claimed,false);
+  assert.equal(duplicate.state,'accepted_not_booked');
+});
+test('cannot record without claim', async () => {
+  const lock = new UsainBookingLock({ storage: storage() });
+  const result = await lock.fetch(new Request('https://internal/record', {
+    method:'POST',headers:{'content-type':'application/json'},
+    body:JSON.stringify({eventKey:'2026-10-27/21:00/Europe-Rome',status:'unknown'})
+  }));
+  assert.equal((await result.json()).updated,false);
+});
