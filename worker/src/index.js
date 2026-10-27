@@ -1,3 +1,6 @@
+import { coordinateBooking } from './coordinator-orchestrator.js';
+import { claimBookingEvent, recordBookingDispatch } from './coordinator-claim.js';
+export { UsainBookingLock } from './usain-booking-lock.js';
 import { availabilityPage } from './availability-page.js';
 import { schedulePage } from './schedule-page.js';
 const encoder = new TextEncoder();
@@ -105,6 +108,32 @@ const historyWidget = [
 const historyPage = "<!doctype html><html lang='it'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Prenotazioni USAIN</title></head><body style='background:#080809;margin:0;padding-top:25px'><nav style='max-width:520px;margin:auto;padding:0 18px;font:16px system-ui'><a href='/' style='color:#f5a953'>← USAIN Control</a></nav>" + historyWidget + "</body></html>";
 
 export default {
+  // Dry run only: no cron configured, no GitHub or GoBright requests.
+  async scheduled(controller, env, ctx) {
+    const instant = new Date(controller.scheduledTime ?? Date.now());
+    // Fail-closed: production and previews remain dry-run unless explicitly enabled.
+    const liveEnabled = env.USAIN_COORDINATOR_MODE === 'live' &&
+      env.USAIN_COORDINATOR_APPROVED === 'true';
+    if (liveEnabled && (!env.USAIN_BOOKING_LOCK || !env.GITHUB_ACTIONS_TOKEN))
+      throw new Error('Coordinator live prerequisites missing');
+    const result = await coordinateBooking(liveEnabled ? {
+      instant, mode: 'live',
+      repository: env.GITHUB_REPOSITORY,
+      token: env.GITHUB_ACTIONS_TOKEN,
+      claim: key => claimBookingEvent(env.USAIN_BOOKING_LOCK, key),
+      record: (key, status) => recordBookingDispatch(env.USAIN_BOOKING_LOCK, key, status),
+      send: request => fetch(request.url, {
+        method: request.method, headers: request.headers, body: request.body
+      })
+    } : { instant, mode: 'dry-run' });
+    console.log(JSON.stringify({
+      component: 'usain-coordinator',
+      mode: liveEnabled ? 'live' : 'dry-run',
+      lockConfigured: Boolean(env.USAIN_BOOKING_LOCK),
+      utc: instant.toISOString(),
+      ...result
+    }));
+  },
   async fetch(request, env) {
     if (!await identity(request, env)) return new Response("Accesso non autorizzato", { status: 401 });
     const url = new URL(request.url);

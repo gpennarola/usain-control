@@ -1,0 +1,29 @@
+name: USAIN coordinator unit tests
+
+on:
+  pull_request:
+    paths:
+      - 'worker/src/**'
+      - 'worker/tests/**'
+      - '.github/workflows/coordinator-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Unit tests only — no credentials or bookings
+        run: node --test worker/tests/booking-coordinator.test.mjs worker/tests/dispatch-ledger.test.mjs worker/tests/github-dispatch.test.mjs worker/tests/coordinator-claim.test.mjs worker/tests/usain-booking-lock.test.mjs worker/tests/coordinator-orchestrator.test.mjs worker/tests/coordinator-flow.test.mjs
+
+      - name: Install isolated Cloudflare runtime
+        run: npm install --no-save miniflare@3
+      - name: Durable Object runtime concurrency smoke test
+        run: node worker/tests/durable-object-runtime.test.mjs
