@@ -21,4 +21,4 @@ jobs:
         with:
           node-version: '22'
       - name: Unit tests only — no credentials or bookings
-        run: node --test worker/tests/booking-coordinator.test.mjs worker/tests/dispatch-ledger.test.mjs worker/tests/github-dispatch.test.mjs
+        run: node --test worker/tests/booking-coordinator.test.mjs worker/tests/dispatch-ledger.test.mjs worker/tests/github-dispatch.test.mjs worker/tests/coordinator-claim.test.mjs
