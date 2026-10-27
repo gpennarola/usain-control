@@ -1,33 +1,20 @@
 import assert from 'node:assert/strict';
 import { Miniflare } from 'miniflare';
+import { readFile } from 'node:fs/promises';
 
 // Isolated workerd runtime; never contacts GitHub Actions or GoBright.
 // This script uses an in-memory Durable Object namespace and a dedicated test worker.
 const mf = new Miniflare({
   modules: true,
-  script: `
-    export class UsainBookingLock {
-      constructor(ctx) { this.ctx = ctx; }
-      async fetch(request) {
-        if (request.method !== 'POST') return new Response('Method not allowed', {status:405});
-        const {eventKey} = await request.json();
-        if (typeof eventKey !== 'string' || !/^\\d{4}-\\d{2}-\\d{2}\\/\\d{2}:00\\/Europe-Rome$/.test(eventKey))
-          return new Response('Invalid event', {status:400});
-        const claimed = await this.ctx.storage.transaction(async tx => {
-          if (await tx.get(eventKey)) return false;
-          await tx.put(eventKey, {state:'claimed'});
-          return true;
-        });
-        return Response.json({claimed});
-      }
-    }
-    export default {
+  script: [
+    await readFile(new URL('../src/usain-booking-lock.js', import.meta.url), 'utf8'),
+    `export default {
       async fetch(request, env) {
         const stub = env.USAIN_BOOKING_LOCK.get(env.USAIN_BOOKING_LOCK.idFromName('booking-coordinator'));
         return stub.fetch(request);
       }
-    };
-  `,
+    };`
+  ].join('\\n'),
   durableObjects: { USAIN_BOOKING_LOCK: 'UsainBookingLock' },
   compatibilityDate: '2026-09-26'
 });
