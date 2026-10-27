@@ -1,4 +1,5 @@
 import { coordinateBooking } from './coordinator-orchestrator.js';
+import { claimBookingEvent, recordBookingDispatch } from './coordinator-claim.js';
 export { UsainBookingLock } from './usain-booking-lock.js';
 import { availabilityPage } from './availability-page.js';
 import { schedulePage } from './schedule-page.js';
@@ -110,10 +111,24 @@ export default {
   // Dry run only: no cron configured, no GitHub or GoBright requests.
   async scheduled(controller, env, ctx) {
     const instant = new Date(controller.scheduledTime ?? Date.now());
-    const result = await coordinateBooking({instant, mode: 'dry-run'});
+    // Fail-closed: production and previews remain dry-run unless explicitly enabled.
+    const liveEnabled = env.USAIN_COORDINATOR_MODE === 'live' &&
+      env.USAIN_COORDINATOR_APPROVED === 'true';
+    if (liveEnabled && (!env.USAIN_BOOKING_LOCK || !env.GITHUB_ACTIONS_TOKEN))
+      throw new Error('Coordinator live prerequisites missing');
+    const result = await coordinateBooking(liveEnabled ? {
+      instant, mode: 'live',
+      repository: env.GITHUB_REPOSITORY,
+      token: env.GITHUB_ACTIONS_TOKEN,
+      claim: key => claimBookingEvent(env.USAIN_BOOKING_LOCK, key),
+      record: (key, status) => recordBookingDispatch(env.USAIN_BOOKING_LOCK, key, status),
+      send: request => fetch(request.url, {
+        method: request.method, headers: request.headers, body: request.body
+      })
+    } : { instant, mode: 'dry-run' });
     console.log(JSON.stringify({
       component: 'usain-coordinator',
-      mode: 'dry-run',
+      mode: liveEnabled ? 'live' : 'dry-run',
       lockConfigured: Boolean(env.USAIN_BOOKING_LOCK),
       utc: instant.toISOString(),
       ...result
