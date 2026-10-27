@@ -69,3 +69,20 @@ test('timeout records unknown and never retries automatically',async()=>{
   assert.equal(sends,1);
   assert.deepEqual(events,['unknown']);
 });
+
+test('audit failure remains visible and never causes second dispatch',async()=>{
+  let sends=0;
+  const originalError=console.error;
+  console.error=()=>{};
+  try {
+    const result=await coordinateBooking({
+      instant:time,mode:'live',repository:'gpennarola/gobright-auto-booking',
+      token:'dummy',claim:async()=>({claimed:true}),
+      send:async()=>{sends++;return {status:204};},
+      record:async()=>{throw new Error('storage unavailable');}
+    });
+    assert.equal(result.status,'audit_failed_no_retry');
+    assert.equal(result.dispatchStatus,'accepted_not_booked');
+    assert.equal(sends,1);
+  } finally { console.error=originalError; }
+});
