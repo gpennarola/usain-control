@@ -1,4 +1,4 @@
-import { coordinatorDecision } from './coordinator-decision.js';
+import { coordinateBooking } from './coordinator-orchestrator.js';
 export { UsainBookingLock } from './usain-booking-lock.js';
 import { availabilityPage } from './availability-page.js';
 import { schedulePage } from './schedule-page.js';
@@ -110,15 +110,13 @@ export default {
   // Dry run only: no cron configured, no GitHub or GoBright requests.
   async scheduled(controller, env, ctx) {
     const instant = new Date(controller.scheduledTime ?? Date.now());
-    const decision = coordinatorDecision(instant);
-    // Non-mutating probe only: does not claim an event or dispatch a workflow.
-    const lockConfigured = Boolean(env.USAIN_BOOKING_LOCK);
+    const result = await coordinateBooking({instant, mode: 'dry-run'});
     console.log(JSON.stringify({
-      lockConfigured,
       component: 'usain-coordinator',
       mode: 'dry-run',
+      lockConfigured: Boolean(env.USAIN_BOOKING_LOCK),
       utc: instant.toISOString(),
-      ...decision
+      ...result
     }));
   },
   async fetch(request, env) {
