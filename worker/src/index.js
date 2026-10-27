@@ -1,3 +1,4 @@
+import { coordinatorDecision } from './coordinator-decision.js';
 export { UsainBookingLock } from './usain-booking-lock.js';
 import { availabilityPage } from './availability-page.js';
 import { schedulePage } from './schedule-page.js';
@@ -106,6 +107,17 @@ const historyWidget = [
 const historyPage = "<!doctype html><html lang='it'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Prenotazioni USAIN</title></head><body style='background:#080809;margin:0;padding-top:25px'><nav style='max-width:520px;margin:auto;padding:0 18px;font:16px system-ui'><a href='/' style='color:#f5a953'>← USAIN Control</a></nav>" + historyWidget + "</body></html>";
 
 export default {
+  // Dry run only: no cron configured, no GitHub or GoBright requests.
+  async scheduled(controller, env, ctx) {
+    const instant = new Date(controller.scheduledTime ?? Date.now());
+    const decision = coordinatorDecision(instant);
+    console.log(JSON.stringify({
+      component: 'usain-coordinator',
+      mode: 'dry-run',
+      utc: instant.toISOString(),
+      ...decision
+    }));
+  },
   async fetch(request, env) {
     if (!await identity(request, env)) return new Response("Accesso non autorizzato", { status: 401 });
     const url = new URL(request.url);
