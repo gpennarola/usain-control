@@ -7,14 +7,14 @@ import { createBookingDispatch, classifyDispatchStatus } from './github-dispatch
  * A claim is never retried after an unknown network outcome.
  */
 export async function coordinateBooking({
-  instant, mode = 'dry-run', repository, token, claim, send,
+  instant, mode = 'dry-run', repository, token, claim, send, record = async () => {},
   openingHour = 21, leadMinutes = 15
 }) {
   const decision = coordinatorDecision(instant, { openingHour, leadMinutes });
   if (!decision.shouldPrepare) return { status: 'outside_window', ...decision };
   if (mode === 'dry-run') return { status: 'simulated', ...decision };
   if (mode !== 'live') throw new Error('Invalid mode');
-  if (typeof claim !== 'function' || typeof send !== 'function')
+  if (typeof claim !== 'function' || typeof send !== 'function' || typeof record !== 'function')
     throw new Error('Missing durable claim or transport');
   // Validate dispatch prerequisites BEFORE claiming the event.
   const request = createBookingDispatch({
@@ -24,9 +24,12 @@ export async function coordinateBooking({
   if (!locked || locked.claimed !== true) return { status: 'duplicate_suppressed', ...decision };
   try {
     const response = await send(request);
-    return { status: classifyDispatchStatus(response.status), ...decision };
+    const status = classifyDispatchStatus(response.status);
+    await record(decision.eventKey, status).catch(() => {});
+    return { status, ...decision };
   } catch {
     // The request may have reached GitHub. Never dispatch again automatically.
+    await record(decision.eventKey, 'unknown').catch(() => {});
     return { status: 'unknown_not_retryable', ...decision };
   }
 }
