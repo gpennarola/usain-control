@@ -1,16 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-const a=await readFile(new URL('../src/coordinator-decision.js',import.meta.url),'utf8');
-const b=await readFile(new URL('../src/booking-coordinator.js',import.meta.url),'utf8');
-const c=await readFile(new URL('../src/github-dispatch.js',import.meta.url),'utf8');
-const d=await readFile(new URL('../src/coordinator-orchestrator.js',import.meta.url),'utf8');
-const base='data:text/javascript,';
-const coord=base+encodeURIComponent(b);
-const dec=base+encodeURIComponent(a.replace("'./booking-coordinator.js'","'"+coord+"'"));
-const dispatch=base+encodeURIComponent(c);
-const orchestrator=base+encodeURIComponent(d.replace("'./coordinator-decision.js'","'"+dec+"'").replace("'./github-dispatch.js'","'"+dispatch+"'"));
-const {coordinateBooking}=await import(orchestrator);
+import { readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+const temp = await mkdtemp(join(tmpdir(), 'usain-orchestrator-'));
+try {
+  const modules = ['booking-coordinator', 'coordinator-decision', 'github-dispatch', 'coordinator-orchestrator'];
+  for (const name of modules) {
+    let source = await readFile(new URL('../src/' + name + '.js', import.meta.url), 'utf8');
+    source = source.replaceAll('.js\'', '.mjs\'');
+    await writeFile(join(temp, name + '.mjs'), source);
+  }
+  var { coordinateBooking } = await import(pathToFileURL(join(temp, 'coordinator-orchestrator.mjs')).href);
+} finally {
+  await rm(temp, { recursive: true, force: true });
+}
 const time='2026-10-27T19:45:00Z';
 
 test('dry run never claims or calls GitHub',async()=>{
