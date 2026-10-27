@@ -111,7 +111,10 @@ export default {
   async scheduled(controller, env, ctx) {
     const instant = new Date(controller.scheduledTime ?? Date.now());
     const decision = coordinatorDecision(instant);
+    // Non-mutating probe only: does not claim an event or dispatch a workflow.
+    const lockConfigured = Boolean(env.USAIN_BOOKING_LOCK);
     console.log(JSON.stringify({
+      lockConfigured,
       component: 'usain-coordinator',
       mode: 'dry-run',
       utc: instant.toISOString(),
