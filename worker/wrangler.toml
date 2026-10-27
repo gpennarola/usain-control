@@ -10,6 +10,8 @@ run_worker_first = true
 [vars]
 GITHUB_REPOSITORY = "gpennarola/gobright-auto-booking"
 CONFIG_PATH = "control-settings.json"
+USAIN_COORDINATOR_MODE = "live"
+USAIN_COORDINATOR_APPROVED = "true"
 ACCESS_TEAM_DOMAIN = "orange-heart-d1dd.cloudflareaccess.com"
 ACCESS_AUD = "5ff4af12d7cc73d8476fd208cff8e6c7dc3b7aea260d8042ae2f38624d145230"
 ALLOWED_EMAIL = "g.pennarola@texplora.it"
