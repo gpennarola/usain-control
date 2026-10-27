@@ -44,3 +44,28 @@ test('network uncertainty is not retried',async()=>{
   assert.equal(result.status,'unknown_not_retryable');
   assert.equal(calls,1);
 });
+
+test('accepted workflow records dispatch outcome, not booking success',async()=>{
+  const events=[];
+  const result=await coordinateBooking({
+    instant:time,mode:'live',repository:'gpennarola/gobright-auto-booking',
+    token:'dummy',claim:async()=>({claimed:true}),
+    send:async()=>({status:204}),
+    record:async(key,status)=>events.push({key,status})
+  });
+  assert.equal(result.status,'accepted_not_booked');
+  assert.deepEqual(events,[{key:'2026-10-27/21:00/Europe-Rome',status:'accepted_not_booked'}]);
+});
+test('timeout records unknown and never retries automatically',async()=>{
+  const events=[];
+  let sends=0;
+  const result=await coordinateBooking({
+    instant:time,mode:'live',repository:'gpennarola/gobright-auto-booking',
+    token:'dummy',claim:async()=>({claimed:true}),
+    send:async()=>{sends++;throw new Error('timeout');},
+    record:async(key,status)=>events.push(status)
+  });
+  assert.equal(result.status,'unknown_not_retryable');
+  assert.equal(sends,1);
+  assert.deepEqual(events,['unknown']);
+});
