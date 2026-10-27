@@ -1,3 +1,4 @@
+export { UsainBookingLock } from './usain-booking-lock.js';
 import { availabilityPage } from './availability-page.js';
 import { schedulePage } from './schedule-page.js';
 const encoder = new TextEncoder();
