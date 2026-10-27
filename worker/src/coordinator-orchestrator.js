@@ -22,14 +22,20 @@ export async function coordinateBooking({
   });
   const locked = await claim(decision.eventKey);
   if (!locked || locked.claimed !== true) return { status: 'duplicate_suppressed', ...decision };
+  // Separate transport failure from audit failure: never send twice.
+  let status;
   try {
     const response = await send(request);
-    const status = classifyDispatchStatus(response.status);
-    await record(decision.eventKey, status).catch(() => {});
-    return { status, ...decision };
-  } catch {
-    // The request may have reached GitHub. Never dispatch again automatically.
-    await record(decision.eventKey, 'unknown').catch(() => {});
-    return { status: 'unknown_not_retryable', ...decision };
+    status = classifyDispatchStatus(response.status);
+  } catch (error) {
+    status = 'unknown';
+    console.error('USAIN dispatch transport uncertainty', { eventKey: decision.eventKey, message: String(error) });
   }
+  try {
+    await record(decision.eventKey, status);
+  } catch (error) {
+    console.error('USAIN dispatch audit persistence failed', { eventKey: decision.eventKey, status, message: String(error) });
+    return { status: 'audit_failed_no_retry', dispatchStatus: status, ...decision };
+  }
+  return { status: status === 'unknown' ? 'unknown_not_retryable' : status, ...decision };
 }
