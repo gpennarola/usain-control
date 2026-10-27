@@ -13,3 +13,11 @@ CONFIG_PATH = "control-settings.json"
 ACCESS_TEAM_DOMAIN = "orange-heart-d1dd.cloudflareaccess.com"
 ACCESS_AUD = "5ff4af12d7cc73d8476fd208cff8e6c7dc3b7aea260d8042ae2f38624d145230"
 ALLOWED_EMAIL = "g.pennarola@texplora.it"
+
+[[durable_objects.bindings]]
+name = "USAIN_BOOKING_LOCK"
+class_name = "UsainBookingLock"
+
+[[migrations]]
+tag = "usain_lock_v1"
+new_sqlite_classes = ["UsainBookingLock"]
