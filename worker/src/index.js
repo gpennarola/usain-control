@@ -3,12 +3,14 @@ import { claimBookingEvent, recordBookingDispatch } from './coordinator-claim.js
 export { UsainBookingLock } from './usain-booking-lock.js';
 import { availabilityPage } from './availability-page.js';
 import { schedulePage } from './schedule-page.js';
+import { validate, retainOmittedFields } from './settings-validation.js';
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const defaults = {
   schedules: [{ id: 1, start: "15:00", end: "19:00", days: [1, 2, 3, 4, 5], enabled: true, label: "Sala Studenti" }],
   skipTomorrow: null,
-  tomorrowOverride: null
+  tomorrowOverride: null,
+  slotPriority: "afternoon"
 };
 
 function base64url(input) {
@@ -39,28 +41,6 @@ async function identity(request, env) {
   } catch {
     return null;
   }
-}
-
-function validate(value) {
-  const time = (s) => typeof s === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
-  const date = (s) => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s + "T12:00:00Z"));
-  const slot = (x) => x && time(x.start) && time(x.end) && x.start < x.end;
-  if (!value || !Array.isArray(value.schedules) || value.schedules.length > 20 ||
-      !value.schedules.every((s) => slot(s) && Number.isSafeInteger(s.id) && typeof s.enabled === "boolean" &&
-        typeof s.label === "string" && s.label.length <= 80 && Array.isArray(s.days) && s.days.length <= 7 &&
-        s.days.length > 0 && s.days.every((d) => Number.isInteger(d) && d >= 0 && d <= 6) &&
-        (s.openingDaysBefore === undefined || (Number.isInteger(s.openingDaysBefore) && s.openingDaysBefore >= 0 && s.openingDaysBefore <= 7)) &&
-        (s.openingTime === undefined || time(s.openingTime)) &&
-        (s.preference === undefined || ['rooms_then_desks', 'rooms_only', 'desks_only'].includes(s.preference))) ||
-      new Set(value.schedules.map(s => s.id)).size !== value.schedules.length ||
-      (value.skipTomorrow !== null && !date(value.skipTomorrow)) ||
-      (value.tomorrowOverride !== null && !(date(value.tomorrowOverride?.date) && slot(value.tomorrowOverride)))) return false;
-  // Overlapping rules would compete for the same account's booking limit.
-  for (let i=0;i<value.schedules.length;i++) for(let j=i+1;j<value.schedules.length;j++) {
-    const a=value.schedules[i],b=value.schedules[j];
-    if(a.enabled && b.enabled && a.days.some(d=>b.days.includes(d)) && a.start<b.end && b.start<a.end) return false;
-  }
-  return true;
 }
 
 async function github(env, method, path, body) {
@@ -199,12 +179,7 @@ export default {
     if ((current.data.sha || null) !== input.sha) return new Response("Impostazioni cambiate: ricarica la pagina", { status: 409 });
     // Older home controls omit opening fields: retain each rule's timing.
     const previous = current.status === 200 ? decodedFile(current.data) : defaults;
-    for (const rule of input.settings.schedules) {
-      const old = previous.schedules.find(s => s.id === rule.id);
-      for (const key of ['openingDaysBefore', 'openingTime', 'preference']) {
-        if (rule[key] === undefined && old?.[key] !== undefined) rule[key] = old[key];
-      }
-    }
+    retainOmittedFields(input.settings, previous);
     const serialized = JSON.stringify(input.settings, null, 2) + "\n";
     const content = btoa(Array.from(encoder.encode(serialized), (b) => String.fromCharCode(b)).join(""));
     const payload = { message: "Update Usain booking settings", content, ...(input.sha ? { sha: input.sha } : {}) };
